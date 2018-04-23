@@ -10,24 +10,29 @@ import org.opencv.core.MatOfRect;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
-import org.opencv.highgui.HighGui;
-import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 import org.opencv.objdetect.Objdetect;
 
 public class HumanDetectModule {
 	
+	private CascadeClassifier upperBodyCascade;
 	private CascadeClassifier faceCascade;
+	private CascadeClassifier lowerbodyCascade;
+	private CascadeClassifier profilefaceCascade;
 	private int absoluteFaceSize;
 	
 	public HumanDetectModule(){
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-		faceCascade = new CascadeClassifier("data/haarcascade_lowerbody.xml");
-		//faceCascade = new CascadeClassifier("data/haarcascade_frontalface_alt.xml");
+		lowerbodyCascade = new CascadeClassifier("data/haarcascade_lowerbody.xml");
+		faceCascade = new CascadeClassifier("data/haarcascade_frontalface_alt.xml");
+		profilefaceCascade = new CascadeClassifier("data/haarcascade_profileface.xml");
+		upperBodyCascade = new CascadeClassifier("data/haarcascade_upperbody.xml");
 		absoluteFaceSize = 0;
 		
 	}
+	
+	
 	
 	public BufferedImage getHumanDetectResult(BufferedImage inputImage){
 		Mat frame = bufferedImageToMat(inputImage);
@@ -35,30 +40,68 @@ public class HumanDetectModule {
 		Imgproc.cvtColor(frame, grayFrame, Imgproc.COLOR_BGR2GRAY);
 		Imgproc.equalizeHist(grayFrame, grayFrame);
 		
-		// compute minimum face size (20% of the frame height, in our case)
+		// compute minimum face size (320% of the frame height, in our case)
 		if (this.absoluteFaceSize == 0)
 		{
 			int height = grayFrame.rows();
-			if (Math.round(height * 0.1f) > 0)
+			if (Math.round(height * 0.03f) > 0)
 			{
-				this.absoluteFaceSize = Math.round(height * 0.1f);
+				this.absoluteFaceSize = Math.round(height * 0.03f);
 			}
 		}		
-		
-		MatOfRect faces = new MatOfRect();
-		// detect faces - 1명
-		this.faceCascade.detectMultiScale(grayFrame, faces, 1.1, 2, 0 | Objdetect.CASCADE_SCALE_IMAGE,
-						new Size(this.absoluteFaceSize, this.absoluteFaceSize), new Size());
-						
+		Rect[] bodysArray = null;
 		// each rectangle in faces is a face: draw them!
-		Rect[] facesArray = faces.toArray();
-		for (int i = 0; i < facesArray.length; i++){
-			System.out.println("detect");
-			Imgproc.rectangle(frame, facesArray[i].tl(), facesArray[i].br(), new Scalar(0, 255, 0), 3);
-		}
+		bodysArray = detectFace(grayFrame);
+		drawRect(bodysArray, frame);
+		bodysArray = detectUpper(grayFrame);
+		drawRect(bodysArray, frame);
+		bodysArray = detectLower(grayFrame);
+		drawRect(bodysArray, frame);
+		bodysArray = detectProfileFace(grayFrame);
+		drawRect(bodysArray, frame);
 		
 		
 		return matToBufferedImage(frame);
+	}
+	private void drawRect(Rect[] bodysArray, Mat frame){
+		for (int i = 0; i < bodysArray.length; i++){
+			System.out.println("detect");
+			Imgproc.rectangle(frame, bodysArray[i].tl(), bodysArray[i].br(), new Scalar(0, 255, 0), 3);
+		}
+	}
+	
+	//탐지
+	private Rect[] detectFace(Mat grayFrame){
+		MatOfRect bodys = new MatOfRect();
+		
+		this.faceCascade.detectMultiScale(grayFrame, bodys, 1.1, 1, 0 | Objdetect.CASCADE_SCALE_IMAGE,
+				new Size(this.absoluteFaceSize, this.absoluteFaceSize), new Size());
+		
+		return bodys.toArray();
+	}
+	private Rect[] detectProfileFace(Mat grayFrame){
+		MatOfRect bodys = new MatOfRect();
+		
+		this.profilefaceCascade.detectMultiScale(grayFrame, bodys, 1.1, 1, 0 | Objdetect.CASCADE_SCALE_IMAGE,
+				new Size(this.absoluteFaceSize, this.absoluteFaceSize), new Size());
+		
+		return bodys.toArray();
+	}
+	private Rect[] detectUpper(Mat grayFrame){
+		MatOfRect bodys = new MatOfRect();
+		
+		this.upperBodyCascade.detectMultiScale(grayFrame, bodys, 1.1, 1, 0 | Objdetect.CASCADE_SCALE_IMAGE,
+				new Size(this.absoluteFaceSize, this.absoluteFaceSize), new Size());
+		
+		return bodys.toArray();
+	}
+	private Rect[] detectLower(Mat grayFrame){
+		MatOfRect bodys = new MatOfRect();
+		
+		this.lowerbodyCascade.detectMultiScale(grayFrame, bodys, 1.1, 1, 0 | Objdetect.CASCADE_SCALE_IMAGE,
+				new Size(this.absoluteFaceSize, this.absoluteFaceSize), new Size());
+		
+		return bodys.toArray();
 	}
 	
 	private static Mat bufferedImageToMat(BufferedImage bi) {

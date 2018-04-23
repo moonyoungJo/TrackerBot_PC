@@ -1,5 +1,7 @@
 package com.goodTeam.trackerbot.humanDetect;
 
+import java.awt.image.BufferedImage;
+
 import com.goodTeam.trackerbot.gui.ImageViewer;
 import com.goodTeam.trackerbot.network.ImageFileClient;
 
@@ -19,8 +21,13 @@ public class ImageProcessor implements Runnable {
 	}
 	@Override
 	public void run() {
+		imageFileClient.startConnetion();
 		while(true){
+			System.out.println("요청");
+			BufferedImage img = imageFileClient.getImage();
+			System.out.println("받음");
 			imageViewer.setImage(humanDetectModule.getHumanDetectResult(imageFileClient.getImage()));
+			System.out.println("처리끝");
 		}
 	}
 
