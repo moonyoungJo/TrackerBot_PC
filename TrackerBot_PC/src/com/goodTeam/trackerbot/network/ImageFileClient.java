@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,6 +28,7 @@ public class ImageFileClient {
 	
 	OutputStream outputStream;
 	BufferedOutputStream bufferOutput;
+	BufferedImage image;
 
 	private Socket clientSocket;
 	
@@ -44,14 +46,19 @@ public class ImageFileClient {
 			e.printStackTrace();
 		}
 	}
-
-	public BufferedImage getImage()
-	{
+	public void requestImg(){
 		try {
 			bufferOutput.write(new byte[4]);
 			bufferOutput.flush();
-			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	public void receiveImg(){
+		try {
 			fileOutput = new FileOutputStream(CARMERA_IMG_PATH);
+			
 			// 파일 읽기
 			int input;
 			bufferInput.read(imageSize);
@@ -65,16 +72,15 @@ public class ImageFileClient {
 				size = size - inputSize;
 			}
 			fileOutput.close();
-			
-			//while ((input = bufferInput.read()) != -1) {
-				//fileOutput.write(input);
-			//}
-			//fileOutput.close();
-		
-		} catch (Exception e) {
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+	}
+	public BufferedImage readImg(){
 		BufferedImage ret = null;
 		try {
 			ret = ImageIO.read(new File(CARMERA_IMG_PATH));
@@ -85,6 +91,8 @@ public class ImageFileClient {
 		
 		return ret;
 	}
+
+
 	public void shutDownConnection(){
 		try {
 			inputStream.close();

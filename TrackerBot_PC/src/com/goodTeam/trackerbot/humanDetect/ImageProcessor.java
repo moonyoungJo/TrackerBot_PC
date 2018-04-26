@@ -21,13 +21,21 @@ public class ImageProcessor implements Runnable {
 	}
 	@Override
 	public void run() {
+		BufferedImage img = null;
 		imageFileClient.startConnetion();
+		
+		imageFileClient.requestImg();
+		imageFileClient.receiveImg();
+		img = imageFileClient.readImg();
+		
 		while(true){
 			System.out.println("요청");
-			BufferedImage img = imageFileClient.getImage();
-			System.out.println("받음");
-			imageViewer.setImage(humanDetectModule.getHumanDetectResult(imageFileClient.getImage()));
+			imageFileClient.requestImg();
+			imageViewer.setImage(humanDetectModule.getHumanDetectResult(img));
 			System.out.println("처리끝");
+			imageFileClient.receiveImg();
+			System.out.println("받음");
+			img = imageFileClient.readImg();
 		}
 	}
 
